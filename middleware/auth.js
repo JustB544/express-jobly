@@ -42,8 +42,38 @@ function ensureLoggedIn(req, res, next) {
   }
 }
 
+/** Middleware: Requires correct username. */
+
+function ensureCorrectUserOrAdmin(req, res, next) {
+  try {
+    console.log(res.locals);
+    if (res.locals.user.username === req.params.username || res.locals.user.isAdmin) {
+      return next();
+    } else {
+      return next(new UnauthorizedError);
+    }
+  } catch (err) {
+    return next(new UnauthorizedError);
+  }
+}
+
+function ensureAdmin(req, res, next) {
+  try {
+    console.log(res.locals);
+    if (res.locals.user.isAdmin) {
+      return next();
+    } else {
+      return next(new UnauthorizedError);
+    }
+  } catch (err) {
+    return next(new UnauthorizedError);
+  }
+}
+
 
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
+  ensureCorrectUserOrAdmin,
+  ensureAdmin
 };

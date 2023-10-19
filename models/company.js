@@ -45,18 +45,34 @@ class Company {
   }
 
   /** Find all companies.
-   *
+   * 
+   * name: the company name includes name inside of it
+   * 
+   * minEmployees: the minimum of numEmployees
+   * 
+   * maxEmployees: the maximum of numEmployees
+   * 
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
+  static async findAll({name, minEmployees, maxEmployees} = {}) {
+    if (minEmployees && maxEmployees && minEmployees > maxEmployees) throw new BadRequestError(`Invalid range`);
+    const additions = [];
+    let addString = "";
+    if (name || minEmployees || maxEmployees) {
+      if (name) additions.push(`name ILIKE '%${name}%'`);
+      if (minEmployees) additions.push(`num_employees >= ${minEmployees}`);
+      if (maxEmployees) additions.push(`num_employees <= ${maxEmployees}`);
+      addString = " WHERE " + additions.join(" AND ");
+      // console.log(addString);
+    }
     const companiesRes = await db.query(
           `SELECT handle,
                   name,
                   description,
                   num_employees AS "numEmployees",
                   logo_url AS "logoUrl"
-           FROM companies
+           FROM companies${addString}
            ORDER BY name`);
     return companiesRes.rows;
   }

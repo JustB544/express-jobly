@@ -85,6 +85,36 @@ describe("findAll", function () {
       },
     ]);
   });
+
+  test("works: with filter", async function () {
+    let companies = await Company.findAll({name: "c"});
+    expect(companies.length).toEqual(3);
+    expect(companies[0].name).toBe("C1");
+
+    companies = await Company.findAll({name: "2"});
+    expect(companies.length).toEqual(1);
+    expect(companies[0].name).toBe("C2");
+
+    companies = await Company.findAll({minEmployees: 2});
+    expect(companies.length).toEqual(2);
+    expect(companies[0].name).toBe("C2");
+
+    companies = await Company.findAll({maxEmployees: 2});
+    expect(companies.length).toEqual(2);
+    expect(companies[0].name).toBe("C1");
+
+    companies = await Company.findAll({minEmployees: 2, maxEmployees: 2});
+    expect(companies.length).toEqual(1);
+    expect(companies[0].name).toBe("C2");
+
+    try {
+      companies = await Company.findAll({minEmployees: 2, maxEmployees: 1});
+      fail();
+    }
+    catch(err){
+      expect(err instanceof BadRequestError).toBeTruthy();
+    }
+  });
 });
 
 /************************************** get */
