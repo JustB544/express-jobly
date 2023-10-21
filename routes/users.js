@@ -11,6 +11,7 @@ const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
+const applicationSchema = require("../schemas/application.json");
 
 const router = express.Router();
 
@@ -38,6 +39,27 @@ router.post("/", ensureAdmin, async function (req, res, next) {
     const user = await User.register(req.body);
     const token = createToken(user);
     return res.status(201).json({ user, token });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** POST /[username]/jobs/[job_id] => { applied: job_id } 
+ * 
+ * Authorization required: admin or correct user
+ **/
+
+router.post("/:username/jobs/:job_id", ensureCorrectUserOrAdmin, async function (req, res, next) {
+  console.log(req.params)
+  try {
+    const validator = jsonschema.validate({username: req.params.username, job_id: parseInt(req.params.job_id)}, applicationSchema);
+    if (!validator.valid) {
+      const errs = validator.errors.map(e => e.stack);
+      throw new BadRequestError(errs);
+    }
+
+    const user = await User.apply(req.params);
+    return res.status(201).json({applied: req.params.job_id});
   } catch (err) {
     return next(err);
   }

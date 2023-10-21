@@ -11,6 +11,7 @@ async function commonBeforeAll() {
   await db.query("DELETE FROM users");
   // noinspection SqlWithoutWhere
   await db.query("DELETE FROM companies");
+  await db.query("DELETE FROM applications");
   await db.query("TRUNCATE TABLE jobs RESTART IDENTITY CASCADE");
 
   await Company.create(
@@ -63,20 +64,26 @@ async function commonBeforeAll() {
     isAdmin: false,
   });
 
-  await Job.create(
-    {
+  await Job.create({
       title: "title1",
       salary: 50000,
       equity: 0.5,
       companyHandle: "c1"
-    });
-  await Job.create(
-    {
+  });
+  await Job.create({
       title: "title2",
       salary: 51000,
       equity: 0,
       companyHandle: "c2"
-    });
+  });
+  await User.apply({
+        username: "u1",
+        job_id: 1
+  });
+  await User.apply({
+        username: "u2",
+        job_id: 2
+  });
 }
 
 async function commonBeforeEach() {

@@ -126,6 +126,46 @@ describe("POST /users", function () {
   });
 });
 
+/************************************** POST /users/:username/jobs/:job_id */
+
+describe("POST /users/:username/jobs/job_id", function () {
+  test("unauth for non-admin", async function () {
+    const resp = await request(app)
+        .post("/users/u2/jobs/1")
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(401);
+  });
+
+  test("works for correct user", async function () {
+    const resp = await request(app)
+        .post("/users/u1/jobs/2")
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(201);
+    expect(resp.body).toEqual({applied: "2"});
+
+    const result = await db.query("SELECT * FROM applications WHERE username='u1' AND job_id='2'");
+    expect(result.rows.length).toEqual(1);
+  });
+
+  test("works for admin", async function () {
+    const resp = await request(app)
+        .post("/users/u1/jobs/2")
+        .set("authorization", `Bearer ${u2Token}`);
+    expect(resp.statusCode).toEqual(201);
+    expect(resp.body).toEqual({applied: "2"});
+
+    const result = await db.query("SELECT * FROM applications WHERE username='u1' AND job_id='2'");
+    expect(result.rows.length).toEqual(1);
+  });
+
+  test("doesn't work for invalid job_id", async function () {
+    const resp = await request(app)
+        .post("/users/u1/jobs/3")
+        .set("authorization", `Bearer ${u1Token}`);
+    expect(resp.statusCode).toEqual(404);
+  });
+});
+
 /************************************** GET /users */
 
 describe("GET /users", function () {
@@ -206,6 +246,7 @@ describe("GET /users/:username", function () {
         lastName: "U1L",
         email: "user1@user.com",
         isAdmin: false,
+        jobs: [1]
       },
     });
   });
@@ -221,6 +262,7 @@ describe("GET /users/:username", function () {
         lastName: "U1L",
         email: "user1@user.com",
         isAdmin: false,
+        jobs: [1]
       },
     });
   });

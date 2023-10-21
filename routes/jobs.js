@@ -40,6 +40,7 @@ router.post("/", ensureAdmin, async function (req, res, next) {
   }
 });
 
+
 /** GET /  =>
  *   { jobs: [ { title, salary, equity, companyHandle }, ...] }
  *

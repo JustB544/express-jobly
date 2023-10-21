@@ -56,8 +56,7 @@ class User {
    * Throws BadRequestError on duplicates.
    **/
 
-  static async register(
-      { username, password, firstName, lastName, email, isAdmin }) {
+  static async register({ username, password, firstName, lastName, email, isAdmin }) {
     const duplicateCheck = await db.query(
           `SELECT username
            FROM users
@@ -118,26 +117,29 @@ class User {
   /** Given a username, return data about user.
    *
    * Returns { username, first_name, last_name, is_admin, jobs }
-   *   where jobs is { id, title, company_handle, company_name, state }
+   *   where jobs is [id1, id2, ...]
    *
    * Throws NotFoundError if user not found.
    **/
 
   static async get(username) {
     const userRes = await db.query(
-          `SELECT username,
+          `SELECT users.username,
                   first_name AS "firstName",
                   last_name AS "lastName",
                   email,
-                  is_admin AS "isAdmin"
+                  is_admin AS "isAdmin",
+                  job_id AS "id"
            FROM users
-           WHERE username = $1`,
+           JOIN applications ON users.username = applications.username
+           WHERE users.username = $1`,
         [username],
     );
 
-    const user = userRes.rows[0];
+    if (!userRes.rows[0]) throw new NotFoundError(`No user: ${username}`);
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    const {id, ...user} = userRes.rows[0];
+    user.jobs = userRes.rows.map(c => c.id);
 
     return user;
   }
@@ -203,6 +205,37 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  /** Apply for a job with job_id for username */
+
+  static async apply({ username, job_id }) {
+    const userCheck = await db.query(
+          `SELECT username
+           FROM users
+           WHERE username = $1`,
+        [username],
+    );
+
+    if (!userCheck.rows[0]) throw new NotFoundError(`No user: ${username}`);
+
+    const jobCheck = await db.query(
+          `SELECT id
+           FROM jobs
+           WHERE id = $1`,
+        [job_id],
+    );
+
+    if (!jobCheck.rows[0]) throw new NotFoundError(`No job: ${job_id}`);
+
+    let result = await db.query(
+          `INSERT INTO applications
+          (username, job_id)
+          VALUES ($1, $2)`,
+        [username, job_id],
+    );
+
+    return
   }
 }
 

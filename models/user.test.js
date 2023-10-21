@@ -140,6 +140,7 @@ describe("get", function () {
       lastName: "U1L",
       email: "u1@email.com",
       isAdmin: false,
+      jobs: [1]
     });
   });
 
@@ -224,6 +225,37 @@ describe("remove", function () {
       await User.remove("nope");
       fail();
     } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  });
+});
+
+/************************************** apply */
+
+describe("apply", function () {
+
+  test("works", async function () {
+    await User.apply({username: "u1", job_id: 2});
+    const res = await db.query(
+        "SELECT * FROM applications WHERE username='u1' AND job_id=2");
+    expect(res.rows.length).toEqual(1);
+  });
+
+  test("not found if no such user", async function () {
+    try {
+      await User.apply({username: "user", job_id: 1});
+      fail();
+    } catch (err) {
+      expect(err instanceof NotFoundError).toBeTruthy();
+    }
+  });
+
+  test("not found if no such job", async function () {
+    try {
+      await User.apply({username: "u1", job_id: 3});
+      fail();
+    } catch (err) {
+      console.log(err);
       expect(err instanceof NotFoundError).toBeTruthy();
     }
   });
