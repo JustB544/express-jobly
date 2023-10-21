@@ -46,7 +46,6 @@ function ensureLoggedIn(req, res, next) {
 
 function ensureCorrectUserOrAdmin(req, res, next) {
   try {
-    console.log(res.locals);
     if (res.locals.user.username === req.params.username || res.locals.user.isAdmin) {
       return next();
     } else {
@@ -59,7 +58,6 @@ function ensureCorrectUserOrAdmin(req, res, next) {
 
 function ensureAdmin(req, res, next) {
   try {
-    console.log(res.locals);
     if (res.locals.user.isAdmin) {
       return next();
     } else {

@@ -80,7 +80,7 @@ class Company {
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }
-   *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+   *   where jobs is [{ id, title, salary, equity }, ...]
    *
    * Throws NotFoundError if not found.
    **/
@@ -91,14 +91,23 @@ class Company {
                   name,
                   description,
                   num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
+                  logo_url AS "logoUrl",
+                  id,
+                  title,
+                  salary,
+                  equity
            FROM companies
-           WHERE handle = $1`,
+           JOIN jobs ON handle = company_handle
+           WHERE handle = $1;`,
         [handle]);
 
-    const company = companyRes.rows[0];
+    if (!companyRes.rows[0]) throw new NotFoundError(`No company: ${handle}`);
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    const {id, title, salary, equity, ...company} = companyRes.rows[0];
+    company.jobs = companyRes.rows.map(c => {
+      const {handle, name, description, numEmployees, logoUrl, ...job} = c;
+      return job;
+    });
 
     return company;
   }
